@@ -1,0 +1,176 @@
+{
+  "description": "A New Flow",
+  "states": [
+    {
+      "name": "Trigger",
+      "type": "trigger",
+      "transitions": [
+        {
+          "next": "message",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "incomingCall"
+        },
+        {
+          "event": "incomingRequest"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 40,
+          "y": -50
+        }
+      }
+    },
+    {
+      "name": "split_1",
+      "type": "split-based-on",
+      "transitions": [
+        {
+          "next": "send_and_reply_1",
+          "event": "noMatch"
+        },
+        {
+          "next": "http_1",
+          "event": "match",
+          "conditions": [
+            {
+              "friendly_name": "If value equal_to coffee",
+              "arguments": ["{{flow.variables.message}}"],
+              "type": "equal_to",
+              "value": "coffee"
+            }
+          ]
+        }
+      ],
+      "properties": {
+        "input": "{{flow.variables.message}}",
+        "offset": {
+          "x": -190,
+          "y": 400
+        }
+      }
+    },
+    {
+      "name": "send_and_reply_1",
+      "type": "send-and-wait-for-reply",
+      "transitions": [
+        {
+          "next": "message2",
+          "event": "incomingMessage"
+        },
+        {
+          "event": "timeout"
+        },
+        {
+          "event": "deliveryFailure"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": -300,
+          "y": 640
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "body": "Try sending something else",
+        "timeout": "3600"
+      }
+    },
+    {
+      "name": "message",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "split_1",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "value": "{{trigger.message.Body}}",
+            "key": "message"
+          }
+        ],
+        "offset": {
+          "x": 110,
+          "y": 160
+        }
+      }
+    },
+    {
+      "name": "message2",
+      "type": "set-variables",
+      "transitions": [
+        {
+          "next": "split_1",
+          "event": "next"
+        }
+      ],
+      "properties": {
+        "variables": [
+          {
+            "value": "{{widgets.send_and_reply_1.inbound.Body}}",
+            "key": "message"
+          }
+        ],
+        "offset": {
+          "x": -430,
+          "y": 160
+        }
+      }
+    },
+    {
+      "name": "send_message_1",
+      "type": "send-message",
+      "transitions": [
+        {
+          "event": "sent"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 80,
+          "y": 940
+        },
+        "service": "{{trigger.message.InstanceSid}}",
+        "channel": "{{trigger.message.ChannelSid}}",
+        "from": "{{flow.channel.address}}",
+        "to": "{{contact.channel.address}}",
+        "body": "Thanks! We'll text you when your order is ready"
+      }
+    },
+    {
+      "name": "http_1",
+      "type": "make-http-request",
+      "transitions": [
+        {
+          "next": "send_message_1",
+          "event": "success"
+        },
+        {
+          "event": "failed"
+        }
+      ],
+      "properties": {
+        "offset": {
+          "x": 100,
+          "y": 620
+        },
+        "method": "GET",
+        "content_type": "application/x-www-form-urlencoded;charset=utf-8",
+        "url": "<AGENTURL>"
+      }
+    }
+  ],
+  "initial_state": "Trigger",
+  "flags": {
+    "allow_concurrent_calls": true
+  }
+}
